@@ -31,13 +31,9 @@ class PredictRequest(BaseModel):
     市区町村名: str
     地区名: str
     面積: float
-    延床面積: float
     築年数: float
     駅距離: float
-    道路幅: float
-    道路種類: str
-    建ぺい率: float
-    容積率: float
+    駅名称: str
     用途: str
     構造: str
     
@@ -52,13 +48,8 @@ def predict(req: PredictRequest):
         "市区町村名": req.市区町村名,
         "地区名": req.地区名,
         "面積": req.面積,
-        "延床面積": req.延床面積,
         "築年数": req.築年数,
         "駅距離": req.駅距離,
-        "道路幅": req.道路幅,
-        "道路種類": req.道路種類,
-        "建ぺい率": req.建ぺい率,
-        "容積率": req.容積率,
         "用途": req.用途,
         "構造": req.構造,
         "市区町村平均価格": city_avg,
@@ -68,8 +59,7 @@ def predict(req: PredictRequest):
     }])
     
     raw["駅距離_log"] = np.log1p(raw["駅距離"])
-    raw["面積_sqrt"] = np.sqrt(raw["面積"])
-    raw["延床面積_sqrt"] = np.sqrt(raw["延床面積"]) 
+    raw["面積_sqrt"] = np.sqrt(raw["面積"]) 
     
     X = preprocess.transform(raw)
 
