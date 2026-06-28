@@ -294,6 +294,7 @@ async function geocode(city, district) {
 async function predictPrice() {
     const city = document.getElementById("city").value;
     const district = document.getElementById("district").value;
+    const floor_plan = document.getElementById("floor_plan").value;
 
     const data = {
         "都道府県名": document.getElementById("prefecture").value,
