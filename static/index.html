@@ -294,6 +294,7 @@ async function geocode(city, district) {
 async function predictPrice() {
     const city = document.getElementById("city").value;
     const district = document.getElementById("district").value;
+    const floor_plan = document.getElementById("floor_plan").value;
 
     const data = {
         "都道府県名": document.getElementById("prefecture").value,
@@ -301,12 +302,12 @@ async function predictPrice() {
         "地区名": document.getElementById("district").value,
         "面積": parseFloat(document.getElementById("area").value),
         "築年数": parseFloat(document.getElementById("age").value),
+        "間取り": document.getElementById("floor_plan").value,
         "駅距離": parseFloat(document.getElementById("station").value),
         "構造": document.getElementById("structure").value,
         "用途": document.getElementById("use").value
     };
 
-    const floor_plan = document.getElementById("floor_plan").value;
 
     const res = await fetch("/predict", {
         method: "POST",
