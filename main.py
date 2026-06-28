@@ -31,6 +31,7 @@ class PredictRequest(BaseModel):
     市区町村名: str
     地区名: str
     面積: float
+    間取り: str
     築年数: float
     駅距離: float
     用途: str
@@ -49,6 +50,7 @@ def predict(req: PredictRequest):
         "面積": req.面積,
         "築年数": req.築年数,
         "駅距離": req.駅距離,
+        "間取り": req.間取り,
         "用途": req.用途,
         "構造": req.構造,
         "市区町村平均価格": city_avg,
