@@ -33,7 +33,6 @@ class PredictRequest(BaseModel):
     面積: float
     築年数: float
     駅距離: float
-    駅名称: str
     用途: str
     構造: str
     
