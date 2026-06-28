@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>不動産価格推定AIモデル ー 宅地 ver ー（関東版）</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- MapLibre -->
+    <link href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+
+    <style>
+      body {
+    font-family: 'Noto Sans JP', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f5f7fa;
+    color: #333;
+    }
+    
+    header {
+        background: #1a2a4a;
+        color: white;
+        padding: 22px 16px;
+        text-align: center;
+        border-bottom: 3px solid #16233c;
+    }
+    
+    header h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+    }
+    
+    header p {
+        margin: 6px 0 0;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    
+    .container {
+        max-width: 620px;
+        margin: 26px auto;
+        background: white;
+        padding: 28px;
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    
+    label {
+        display: block;
+        margin-top: 18px;
+        font-weight: 600;
+        font-size: 15px;
+        color: #444;
+    }
+    
+    input, select {
+        width: 95%;
+        padding: 12px;
+        margin-top: 6px;
+        border: 1px solid #d0d5dd;
+        border-radius: 8px;
+        font-size: 16px;
+        background: #fafafa;
+        transition: 0.15s;
+    }
+    
+    input:focus, select:focus {
+        border-color: #1a2a4a;
+        background: #fff;
+        outline: none;
+    }
+    
+    button {
+        width: 100%;
+        margin-top: 30px;
+        padding: 15px;
+        background: #1a2a4a;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    
+    button:hover {
+        background: #243a63;
+    }
+    
+    #result {
+        margin-top: 28px;
+        font-size: 26px;
+        font-weight: 700;
+        text-align: center;
+        color: #1a2a4a;
+    }
+    
+    #map {
+        width: 100%;
+        height: 360px;
+        margin-top: 30px;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+    }
+    
+    @media (max-width: 480px) {
+    
+        body {
+            font-size: 18px; 
+        }
+
+        .container {
+            max-width: 100%;
+        }
+    
+        label {
+            font-size: 17px;
+        }
+    
+        input, select {
+            font-size: 18px;
+            padding: 14px; 
+        }
+    
+        button {
+            font-size: 20px;
+            padding: 18px; 
+        }
+    
+        #result {
+            font-size: 28px; 
+        }
+    
+        #map {
+            height: 420px; 
+        }
+    }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>不動産価格推定AIモデル ー 宅地 ver ー（関東版）</h1>
+    <p>前年度の不動産取引データ（関東6県）を基に、AIが最新の不動産価格を算出します。</p>
+</header>
+    
+<div class="container">
+
+    <label>都県名</label>
+    <select id="prefecture">
+        <option value="東京都">東京都</option>
+        <option value="神奈川県">神奈川県</option>
+        <option value="埼玉県">埼玉県</option>
+        <option value="千葉県">千葉県</option>
+        <option value="茨城県">茨城県</option>
+        <option value="栃木県">栃木県</option>
+        <option value="群馬県">群馬県</option>
+    </select>
+    
+    <label>市区町村名</label>
+    <select id="city"></select>
+
+    <label>地区名</label>
+    <select id="district"></select>
+    
+    <label>用途</label>
+    <select id="use">
+        <option value="住宅">住宅</option>
+        <option value="店舗">店舗</option>
+        <option value="事務所">事務所</option>
+    </select>
+
+    <label>建物の構造</label>
+        <select id="structure">
+            <option value="木造">木造</option>
+            <option value="鉄骨造">鉄骨造</option>
+            <option value="RC">RC</option>
+            <option value="SRC">SRC</option>
+            <option value="軽量鉄骨造">軽量鉄骨造</option>
+            <option value="その他">その他</option>
+        </select>
+
+    <label>前面道路：種類</label>
+        <select id="road_type">
+            <option value="公道">公道</option>
+            <option value="私道">私道</option>
+            <option value="区道">区道</option>
+            <option value="都道">都道</option>
+            <option value="国道">国道</option>
+            <option value="市道">市道</option>
+            <option value="町道">町道</option>
+            <option value="その他">その他</option>
+        </select>
+
+    <label>前面道路：幅員（m）</label>
+    <input id="road" type="number">
+
+    <label>面積（㎡）</label>
+    <input id="area" type="number">
+
+    <label>延床面積（㎡）</label>
+    <input id="floor_area" type="number">
+    
+    <label>築年数</label>
+    <input id="age" type="number">
+
+    <label>最寄駅：距離（分）</label>
+    <input id="station" type="number">
+
+    <label>建ぺい率（％）</label>
+    <input id="kenpei" type="number">
+
+    <label>容積率（％）</label>
+    <input id="yoseki" type="number">
+    
+    <button onclick="predictPrice()">推定する</button>
+
+    <div id="result" style="margin-top: 20px; display:none;">
+        <p><strong>推定成約価格：</strong>
+            <span id="predicted_price"></span> 万円
+        </p>
+    
+        <p><strong>推定売出価格：</strong>
+            <span id="predicted_list_price"></span> 万円
+        </p>
+    </div>
+    
+    <div id="map"></div>
+
+</div>
+
+<script>
+async function loadCities() {
+    const pref = document.getElementById("prefecture").value;
+
+    const res = await fetch("/static/cities.json");
+    const all = await res.json();
+
+    const cities = all[pref] || [];
+
+    const citySelect = document.getElementById("city");
+    citySelect.innerHTML = "";
+
+    cities.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        citySelect.appendChild(opt);
+    });
+
+    loadDistricts();
+}
+
+async function loadDistricts() {
+    const city = document.getElementById("city").value;
+    const res = await fetch("/static/city_to_districts.json");
+    const mapping = await res.json();
+
+    const districtSelect = document.getElementById("district");
+    districtSelect.innerHTML = "";
+
+    (mapping[city] || []).forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = d;
+        districtSelect.appendChild(opt);
+    });
+}
+
+document.getElementById("prefecture").addEventListener("change", loadCities);
+document.getElementById("city").addEventListener("change", loadDistricts);
+
+let map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://tiles.stadiamaps.com/styles/osm_bright.json',
+    center: [139.767, 35.681], 
+    zoom: 8
+});
+
+let marker = null;
+    
+async function geocode(city, district) {
+    const q = `${city} ${district}`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.length === 0) return null;
+
+    return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon)
+    };
+}
+
+async function predictPrice() {
+    const city = document.getElementById("city").value;
+    const district = document.getElementById("district").value;
+
+    const data = {
+        "都道府県名": document.getElementById("prefecture").value,
+        "市区町村名": document.getElementById("city").value,
+        "地区名": document.getElementById("district").value,
+        "面積": parseFloat(document.getElementById("area").value),
+        "延床面積": parseFloat(document.getElementById("floor_area").value),
+        "築年数": parseFloat(document.getElementById("age").value),
+        "駅距離": parseFloat(document.getElementById("station").value),
+        "道路幅": parseFloat(document.getElementById("road").value),
+        "道路種類": document.getElementById("road_type").value,
+        "建ぺい率": parseFloat(document.getElementById("kenpei").value),
+        "容積率": parseFloat(document.getElementById("yoseki").value),
+        "構造": document.getElementById("structure").value,
+        "用途": document.getElementById("use").value
+    };
+
+    const res = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (result.predicted_price !== undefined) {
+        
+        document.getElementById("predicted_price").textContent =
+        Math.round(result.predicted_price / 10000);
+
+        document.getElementById("predicted_list_price").textContent =
+        Math.round(result.predicted_list_price / 10000);
+
+        document.getElementById("result").style.display = "block";
+        
+    } else {
+        
+        document.getElementById("result").innerText = "推定に失敗しました";
+        
+    }
+
+    const pos = await geocode(data["市区町村名"], data["地区名"]);
+    if (pos) {
+        map.flyTo({ center: [pos.lon, pos.lat], zoom: 15 });
+
+        if (marker) marker.remove();
+        marker = new maplibregl.Marker().setLngLat([pos.lon, pos.lat]).addTo(map);
+    }
+}
+
+loadCities();
+</script>
+
+</body>
+</html>
