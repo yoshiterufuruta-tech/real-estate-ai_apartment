@@ -278,7 +278,7 @@ let map = new maplibregl.Map({
 });
 
 let marker = null;
-    
+
 async function geocode(city, district) {
     const q = `${city} ${district}`;
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`;
@@ -295,13 +295,16 @@ async function geocode(city, district) {
 }
 
 async function predictPrice() {
+
+    // 🔥 FastAPI と LightGBM が期待する日本語キーで送る
     const data = {
-        "面積": parseFloat(document.getElementById("area").value),
-        "築年数": parseFloat(document.getElementById("age").value),
-        "駅距離": parseFloat(document.getElementById("station").value),
+        "都道府県名": document.getElementById("prefecture").value,
         "市区町村名": document.getElementById("city").value,
         "地区名": document.getElementById("district").value,
+        "面積": parseFloat(document.getElementById("area").value),
+        "築年数": parseFloat(document.getElementById("age").value),
         "間取り": document.getElementById("floor_plan").value,
+        "駅距離": parseFloat(document.getElementById("station").value),
         "構造": document.getElementById("structure").value,
         "用途": document.getElementById("use").value
     };
@@ -315,6 +318,7 @@ async function predictPrice() {
     const result = await res.json();
 
     if (result.predicted_price !== undefined) {
+
         document.getElementById("predicted_price").textContent =
             Math.round(result.predicted_price / 10000);
 
@@ -322,6 +326,7 @@ async function predictPrice() {
             Math.round(result.predicted_list_price / 10000);
 
         document.getElementById("result").style.display = "block";
+
     } else {
         document.getElementById("result").innerText = "推定に失敗しました";
     }
@@ -334,7 +339,6 @@ async function predictPrice() {
         marker = new maplibregl.Marker().setLngLat([pos.lon, pos.lat]).addTo(map);
     }
 }
-
 
 loadCities();
 </script>
