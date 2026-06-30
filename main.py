@@ -66,8 +66,8 @@ def predict(req: PredictRequest):
     raw["駅距離_log"] = np.log1p(raw["駅距離"])
     raw["面積_sqrt"] = np.sqrt(raw["面積"])
 
-    X = preprocess.transform(raw)
-    X = pd.DataFrame(X, columns=preprocess.get_feature_names_out())
+    X_np = preprocess.transform(raw)
+    X = pd.DataFrame(X_np, columns=preprocess.get_feature_names_out())
     X = X[model.feature_names_in_]
     pred = model.predict(X)[0]
     pred = pred * (122.1 / 119.2)
