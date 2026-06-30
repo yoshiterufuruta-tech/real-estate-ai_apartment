@@ -12,8 +12,12 @@ STATIC_DIR = BASE_DIR / "static"
 
 app = FastAPI()
 
-# static フォルダをマウント
-app.mount("/static", StaticFiles(directory="static"), name="static")
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+else:
+    logger.warning("static ディレクトリが見つかりません: %s", STATIC_DIR)
+
+# グローバル変数（起動時に初期化）
 
 STATIC_DIR = Path("static")
 
