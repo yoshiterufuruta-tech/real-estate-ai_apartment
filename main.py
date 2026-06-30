@@ -90,4 +90,8 @@ def predict(req: PredictRequest):
     return {
         "predicted_price": int(pred),
         "predicted_list_price": int(pred_list_price)
+
+    print("MODEL STEPS:", model.named_steps)
+    print("TYPE OF PREPROCESS:", type(model.named_steps["preprocess"]))
+
     }
