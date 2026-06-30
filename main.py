@@ -42,22 +42,6 @@ class PredictRequest(BaseModel):
     駅距離: float
     用途: str
     構造: str
-
-def normalize_floor_plan(x):
-    if pd.isna(x): return "不明"
-    s = str(x).upper()
-    s = s.replace("Ｌ", "L").replace("Ｄ", "D").replace("Ｋ", "K").replace("Ｒ", "R")
-    s = s.replace("Ｓ", "S").replace(" ", "").replace(" ", "")
-    if "1R" in s or "1K" in s: return "1K"
-    if "1DK" in s: return "1DK"
-    if "1LDK" in s: return "1LDK"
-    if "2K" in s: return "2K"
-    if "2DK" in s: return "2DK"
-    if "2LDK" in s: return "2LDK"
-    if "3LDK" in s: return "3LDK"
-    if "4LDK" in s: return "4LDK"
-    if "5LDK" in s: return "5LDK"
-    return "その他"
     
 @app.post("/predict")
 def predict(req: PredictRequest):
