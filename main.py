@@ -6,6 +6,9 @@ import numpy as np
 import json
 import joblib
 from pathlib import Path
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -45,7 +48,7 @@ class PredictRequest(BaseModel):
 
 @app.post("/predict")
 def predict(req: PredictRequest):
-
+    logging.info("REQUEST JSON: %s", req.model_dump())
     city_avg = city_avg_price.get(req.市区町村名, 0)
     district_avg = district_avg_price.get(req.地区名, 0)
 
