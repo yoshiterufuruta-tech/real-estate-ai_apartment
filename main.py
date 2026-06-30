@@ -22,6 +22,14 @@ model = joblib.load("model.pkl")
 preprocess = model.named_steps["preprocess"]
 regressor = model.named_steps["regressor"]
 
+print("MODEL STEPS:", model.named_steps)
+print("TYPE OF PREPROCESS:", type(model.named_steps["preprocess"]))
+
+try:
+    print("PREPROCESS FEATURE NAMES:", model.named_steps["preprocess"].get_feature_names_out())
+except Exception as e:
+    print("PREPROCESS FEATURE NAMES ERROR:", e)
+
 # 平均価格データ読み込み
 with open(STATIC_DIR / "city_avg_price.json", encoding="utf-8") as f:
     city_avg_price = json.load(f)
@@ -30,6 +38,8 @@ with open(STATIC_DIR / "district_avg_price.json", encoding="utf-8") as f:
     district_avg_price = json.load(f)
 
 feature_columns = preprocess.get_feature_names_out()
+
+
 
 class PredictRequest(BaseModel):
     都道府県名: str
@@ -90,8 +100,5 @@ def predict(req: PredictRequest):
     return {
         "predicted_price": int(pred),
         "predicted_list_price": int(pred_list_price)
-
-    print("MODEL STEPS:", model.named_steps)
-    print("TYPE OF PREPROCESS:", type(model.named_steps["preprocess"]))
 
     }
