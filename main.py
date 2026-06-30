@@ -11,24 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 
 app = FastAPI()
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-STATIC_DIR = Path("static")
 
 # モデル読み込み
 model = joblib.load("model.pkl")
-
-preprocess = model.named_steps["preprocess"]
-regressor = model.named_steps["regressor"]
-
-print("MODEL STEPS:", model.named_steps)
-print("TYPE OF PREPROCESS:", type(model.named_steps["preprocess"]))
-
-try:
-    print("PREPROCESS FEATURE NAMES:", model.named_steps["preprocess"].get_feature_names_out())
-except Exception as e:
-    print("PREPROCESS FEATURE NAMES ERROR:", e)
 
 # 平均価格データ読み込み
 with open(STATIC_DIR / "city_avg_price.json", encoding="utf-8") as f:
