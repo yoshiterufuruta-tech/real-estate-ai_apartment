@@ -66,7 +66,7 @@ def predict(req: PredictRequest):
     X = preprocess.transform(raw)
     pred = regressor.predict(X)[0]
 
-    # 補正係数（あなたのコードのまま）
+    # 補正係数
     pred = pred * (122.1 / 119.2)
     pred_list_price = pred * 1.255
 
