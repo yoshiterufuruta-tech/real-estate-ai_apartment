@@ -6,6 +6,7 @@ import numpy as np
 import json
 import joblib
 from pathlib import Path
+import re
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -13,15 +14,31 @@ STATIC_DIR = BASE_DIR / "static"
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# モデル読み込み
+# モデル（Pipeline: preprocess + regressor）
 model = joblib.load("model.pkl")
 
-# 平均価格データ読み込み
+# 平均価格データ
 with open(STATIC_DIR / "city_avg_price.json", encoding="utf-8") as f:
     city_avg_price = json.load(f)
 
 with open(STATIC_DIR / "district_avg_price.json", encoding="utf-8") as f:
     district_avg_price = json.load(f)
+
+# ============================
+#  間取り → 数値化（部屋数 + LDKフラグ）
+# ============================
+
+def encode_madori(m):
+    if not isinstance(m, str):
+        return 0, 0
+    nums = re.findall(r'\d+', m)
+    rooms = int(nums[0]) if nums else 0
+    is_ldk = 1 if "LDK" in m.upper() else 0
+    return rooms, is_ldk
+
+# ============================
+#  FastAPI 入力
+# ============================
 
 class PredictRequest(BaseModel):
     都道府県名: str
@@ -33,12 +50,18 @@ class PredictRequest(BaseModel):
     駅距離: float
     用途: str
     構造: str
-    
+
+# ============================
+#  推定API
+# ============================
+
 @app.post("/predict")
 def predict(req: PredictRequest):
+
     city_avg = city_avg_price.get(req.市区町村名, 0)
     district_avg = district_avg_price.get(req.地区名, 0)
 
+    # 入力データを DataFrame 化
     raw = pd.DataFrame([{
         "都道府県名": req.都道府県名,
         "市区町村名": req.市区町村名,
@@ -55,21 +78,21 @@ def predict(req: PredictRequest):
         "地区平均価格_log": np.log1p(district_avg)
     }])
 
+    # 数値特徴量
     raw["駅距離_log"] = np.log1p(raw["駅距離"])
     raw["面積_sqrt"] = np.sqrt(raw["面積"])
 
+    # ★ 間取り数値化（学習コードと同じ処理）
+    raw["部屋数"], raw["LDKフラグ"] = zip(*raw["間取り"].apply(encode_madori))
 
-    # 予測
+    # ★ Pipeline に raw をそのまま渡す（前処理は model が全部やる）
     pred = model.predict(raw)[0]
 
     # 補正
     pred = pred * (122.1 / 119.2)
     pred_list_price = pred * 1.255
 
-    pred = max(pred, 0)
-
     return {
-        "predicted_price": int(pred),
+        "predicted_price": int(max(pred, 0)),
         "predicted_list_price": int(pred_list_price)
-
     }
