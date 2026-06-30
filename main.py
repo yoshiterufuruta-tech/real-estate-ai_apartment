@@ -67,7 +67,7 @@ def predict(req: PredictRequest):
     raw["面積_sqrt"] = np.sqrt(raw["面積"])
 
     X = preprocess.transform(raw)
-
+    pred = model.predict(X)[0]
     pred = pred * (122.1 / 119.2)
     pred_list_price = pred * 1.255
 
