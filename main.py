@@ -6,9 +6,6 @@ import numpy as np
 import json
 import joblib
 from pathlib import Path
-import logging
-
-logging.basicConfig(level=logging.INFO)
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
