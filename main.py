@@ -48,8 +48,8 @@ def predict(req: PredictRequest):
         "地区名": req.地区名,
         "面積": req.面積,
         "築年数": req.築年数,
-        "駅距離": req.駅距離,
         "間取り": req.間取り,
+        "駅距離": req.駅距離,
         "用途": req.用途,
         "構造": req.構造,
         "市区町村平均価格": city_avg,
@@ -58,7 +58,7 @@ def predict(req: PredictRequest):
         "地区平均価格_log": np.log1p(district_avg)
     }])
 
-    # 派生特徴量（学習時と同じ）
+    # ★ 学習時と同じ派生特徴量
     raw["駅距離_log"] = np.log1p(raw["駅距離"])
     raw["面積_sqrt"] = np.sqrt(raw["面積"])
 
