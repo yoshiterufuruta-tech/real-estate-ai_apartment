@@ -12,6 +12,8 @@ STATIC_DIR = BASE_DIR / "static"
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 STATIC_DIR = Path("static")
 
 # モデル読み込み
