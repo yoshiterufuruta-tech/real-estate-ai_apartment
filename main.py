@@ -1,31 +1,28 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import joblib
+import pandas as pd
 import numpy as np
 import json
-import pandas as pd
+import joblib
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
-
 app = FastAPI()
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-model = joblib.load(BASE_DIR / "model.pkl")
+STATIC_DIR = Path("static")
 
+# モデル読み込み
+model = joblib.load("model.pkl")
 preprocess = model.named_steps["preprocess"]
 regressor = model.named_steps["regressor"]
 
+# 平均価格データ読み込み
 with open(STATIC_DIR / "city_avg_price.json", encoding="utf-8") as f:
     city_avg_price = json.load(f)
 
 with open(STATIC_DIR / "district_avg_price.json", encoding="utf-8") as f:
     district_avg_price = json.load(f)
 
-feature_columns = preprocess.get_feature_names_out()
-
+# ★ 学習時の列名と完全一致させる（日本語）
 class PredictRequest(BaseModel):
     都道府県名: str
     市区町村名: str
@@ -36,13 +33,15 @@ class PredictRequest(BaseModel):
     駅距離: float
     用途: str
     構造: str
-    
+
 @app.post("/predict")
 def predict(req: PredictRequest):
 
+    # 平均価格特徴量
     city_avg = city_avg_price.get(req.市区町村名, 0)
     district_avg = district_avg_price.get(req.地区名, 0)
 
+    # ★ 学習時と完全に同じ列名で DataFrame を作る
     raw = pd.DataFrame([{
         "都道府県名": req.都道府県名,
         "市区町村名": req.市区町村名,
@@ -58,15 +57,19 @@ def predict(req: PredictRequest):
         "市区町村平均価格_log": np.log1p(city_avg),
         "地区平均価格_log": np.log1p(district_avg)
     }])
-    
-    raw["駅距離_log"] = np.log1p(raw["駅距離"])
-    raw["面積_sqrt"] = np.sqrt(raw["面積"]) 
-    
-    X = preprocess.transform(raw)
 
+    # 派生特徴量（学習時と同じ）
+    raw["駅距離_log"] = np.log1p(raw["駅距離"])
+    raw["面積_sqrt"] = np.sqrt(raw["面積"])
+
+    # 前処理 → 推定
+    X = preprocess.transform(raw)
     pred = regressor.predict(X)[0]
+
+    # 補正係数（あなたのコードのまま）
     pred = pred * (122.1 / 119.2)
     pred_list_price = pred * 1.255
+
     pred = max(pred, 0)
 
     return {
