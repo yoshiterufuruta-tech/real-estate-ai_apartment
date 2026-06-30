@@ -41,7 +41,7 @@ def predict(req: PredictRequest):
     city_avg = city_avg_price.get(req.市区町村名, 0)
     district_avg = district_avg_price.get(req.地区名, 0)
 
-    # ★ 学習時と完全に同じ列名で DataFrame を作る
+    # ★ 学習時と完全一致する特徴量セット
     raw = pd.DataFrame([{
         "都道府県名": req.都道府県名,
         "市区町村名": req.市区町村名,
@@ -66,7 +66,7 @@ def predict(req: PredictRequest):
     X = preprocess.transform(raw)
     pred = regressor.predict(X)[0]
 
-    # 補正係数
+    # 補正係数（あなたのコードのまま）
     pred = pred * (122.1 / 119.2)
     pred_list_price = pred * 1.255
 
