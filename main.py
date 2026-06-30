@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import pandas as pd
 import numpy as np
@@ -7,6 +8,9 @@ import joblib
 from pathlib import Path
 
 app = FastAPI()
+
+# ★ static フォルダをマウント
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 STATIC_DIR = Path("static")
 
@@ -22,7 +26,6 @@ with open(STATIC_DIR / "city_avg_price.json", encoding="utf-8") as f:
 with open(STATIC_DIR / "district_avg_price.json", encoding="utf-8") as f:
     district_avg_price = json.load(f)
 
-# ★ 学習時の列名と完全一致させる（日本語）
 class PredictRequest(BaseModel):
     都道府県名: str
     市区町村名: str
@@ -37,11 +40,9 @@ class PredictRequest(BaseModel):
 @app.post("/predict")
 def predict(req: PredictRequest):
 
-    # 平均価格特徴量
     city_avg = city_avg_price.get(req.市区町村名, 0)
     district_avg = district_avg_price.get(req.地区名, 0)
 
-    # ★ 学習時と完全一致する特徴量セット
     raw = pd.DataFrame([{
         "都道府県名": req.都道府県名,
         "市区町村名": req.市区町村名,
@@ -58,15 +59,12 @@ def predict(req: PredictRequest):
         "地区平均価格_log": np.log1p(district_avg)
     }])
 
-    # ★ 学習時と同じ派生特徴量
     raw["駅距離_log"] = np.log1p(raw["駅距離"])
     raw["面積_sqrt"] = np.sqrt(raw["面積"])
 
-    # 前処理 → 推定
     X = preprocess.transform(raw)
     pred = regressor.predict(X)[0]
 
-    # 補正係数（あなたのコードのまま）
     pred = pred * (122.1 / 119.2)
     pred_list_price = pred * 1.255
 
