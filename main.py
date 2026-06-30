@@ -66,7 +66,8 @@ def predict(req: PredictRequest):
     raw["駅距離_log"] = np.log1p(raw["駅距離"])
     raw["面積_sqrt"] = np.sqrt(raw["面積"])
 
-    X = preprocess.transform(raw)
+    X = preprocess(raw)
+    X = X[model.feature_name_in_]
     pred = model.predict(X)[0]
     pred = pred * (122.1 / 119.2)
     pred_list_price = pred * 1.255
