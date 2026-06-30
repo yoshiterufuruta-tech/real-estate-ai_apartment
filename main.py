@@ -7,15 +7,19 @@ import json
 import joblib
 from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+
 app = FastAPI()
 
-# ★ static フォルダをマウント
+# static フォルダをマウント
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 STATIC_DIR = Path("static")
 
 # モデル読み込み
 model = joblib.load("model.pkl")
+
 preprocess = model.named_steps["preprocess"]
 regressor = model.named_steps["regressor"]
 
@@ -25,6 +29,8 @@ with open(STATIC_DIR / "city_avg_price.json", encoding="utf-8") as f:
 
 with open(STATIC_DIR / "district_avg_price.json", encoding="utf-8") as f:
     district_avg_price = json.load(f)
+
+feature_columns = preprocess.get_feature_names_out()
 
 class PredictRequest(BaseModel):
     都道府県名: str
