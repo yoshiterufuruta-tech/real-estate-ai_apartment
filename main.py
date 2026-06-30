@@ -39,8 +39,6 @@ with open(STATIC_DIR / "district_avg_price.json", encoding="utf-8") as f:
 
 feature_columns = preprocess.get_feature_names_out()
 
-
-
 class PredictRequest(BaseModel):
     都道府県名: str
     市区町村名: str
@@ -76,20 +74,9 @@ def predict(req: PredictRequest):
     raw["駅距離_log"] = np.log1p(raw["駅距離"])
     raw["面積_sqrt"] = np.sqrt(raw["面積"])
 
-    # Pipeline の前処理部分を正しく呼び出す
-    X_np = model[:-1].transform(raw)
-
-    # 前処理後の正しい列名を取得
-    feature_names = model[:-1].get_feature_names_out()
-
-    # numpy → DataFrame に戻す
-    X = pd.DataFrame(X_np, columns=feature_names)
-
-    # 学習時と同じ列順に揃える
-    X = X[model.feature_names_in_]
 
     # 予測
-    pred = model.predict(X)[0]
+    pred = model.predict(raw)[0]
 
     # 補正
     pred = pred * (122.1 / 119.2)
