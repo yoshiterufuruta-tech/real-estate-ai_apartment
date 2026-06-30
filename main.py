@@ -25,16 +25,26 @@ with open(STATIC_DIR / "district_avg_price.json", encoding="utf-8") as f:
     district_avg_price = json.load(f)
 
 # ============================
-#  間取り → 数値化（部屋数 + LDKフラグ）
+#  間取り → 数値化（部屋数 + LDK + DK + K + S）
 # ============================
 
 def encode_madori(m):
     if not isinstance(m, str):
-        return 0, 0
-    nums = re.findall(r'\d+', m)
+        return 0, 0, 0, 0, 0
+
+    s = m.upper()
+
+    # 部屋数
+    nums = re.findall(r'\d+', s)
     rooms = int(nums[0]) if nums else 0
-    is_ldk = 1 if "LDK" in m.upper() else 0
-    return rooms, is_ldk
+
+    # フラグ
+    is_ldk = 1 if "LDK" in s else 0
+    is_dk  = 1 if "DK" in s and "LDK" not in s else 0
+    is_k   = 1 if "K" in s and "DK" not in s and "LDK" not in s else 0
+    is_s   = 1 if "S" in s else 0
+
+    return rooms, is_ldk, is_dk, is_k, is_s
 
 # ============================
 #  FastAPI 入力
@@ -82,8 +92,9 @@ def predict(req: PredictRequest):
     raw["駅距離_log"] = np.log1p(raw["駅距離"])
     raw["面積_sqrt"] = np.sqrt(raw["面積"])
 
-    # ★ 間取り数値化（学習コードと同じ処理）
-    raw["部屋数"], raw["LDKフラグ"] = zip(*raw["間取り"].apply(encode_madori))
+    # ★ 間取り数値化（学習コードと完全同期）
+    raw["部屋数"], raw["LDKフラグ"], raw["DKフラグ"], raw["Kフラグ"], raw["Sフラグ"] = \
+        zip(*raw["間取り"].apply(encode_madori))
 
     # ★ Pipeline に raw をそのまま渡す（前処理は model が全部やる）
     pred = model.predict(raw)[0]
