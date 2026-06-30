@@ -12,13 +12,6 @@ STATIC_DIR = BASE_DIR / "static"
 
 app = FastAPI()
 
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-else:
-    logger.warning("static ディレクトリが見つかりません: %s", STATIC_DIR)
-
-# グローバル変数（起動時に初期化）
-
 STATIC_DIR = Path("static")
 
 # モデル読み込み
